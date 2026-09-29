@@ -1,0 +1,43 @@
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.iml
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules/
+dist/
+coverage/
+*.log
+
+# Android
+.gradle/
+build/
+local.properties
+*.apk
+*.aab
+captures/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ML data & artifacts (too large for git)
+ai/data/raw/
+ai/data/processed/
+ai/checkpoints/
+*.pt
+*.safetensors
+*.onnx
+*.gguf
+mlruns/
