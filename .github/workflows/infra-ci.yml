@@ -1,0 +1,55 @@
+name: infra-ci
+
+on:
+  push:
+    branches: [main]
+    paths: ["infra/docker/**", ".github/workflows/infra-ci.yml"]
+  pull_request:
+    paths: ["infra/docker/**", ".github/workflows/infra-ci.yml"]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: infra/docker
+
+jobs:
+  compose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Use example env
+        run: cp .env.example .env
+
+      # Catches YAML mistakes and missing variables without starting anything.
+      - name: Validate compose file
+        run: docker compose config --quiet
+
+      # Actually boots the stack and waits until every healthcheck passes.
+      - name: Start stack
+        run: docker compose up -d --wait --wait-timeout 120
+
+      - name: Smoke test MySQL (app user can reach both databases)
+        run: |
+          docker compose exec -T mysql \
+            mysql -ulanglearn -pchange-me -e "SHOW DATABASES;" | tee dbs.txt
+          grep -q '^langlearn$' dbs.txt
+          grep -q '^langlearn_test$' dbs.txt
+
+      - name: Smoke test Redis
+        run: test "$(docker compose exec -T redis redis-cli ping)" = "PONG"
+
+      - name: Logs on failure
+        if: failure()
+        run: docker compose logs
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v

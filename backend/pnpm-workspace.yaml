@@ -1,0 +1,6 @@
+# Every folder matching these globs is a package in this workspace.
+# apps/*     -> deployable services (core-api, realtime, worker), added from Phase 1
+# packages/* -> libraries shared between apps
+packages:
+  - "apps/*"
+  - "packages/*"

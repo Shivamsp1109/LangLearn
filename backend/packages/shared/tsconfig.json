@@ -1,0 +1,10 @@
+{
+  // Used by the editor, ESLint and `typecheck`: covers source AND tests.
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "verbatimModuleSyntax": true
+  },
+  "include": ["src"]
+}

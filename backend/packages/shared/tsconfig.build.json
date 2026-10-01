@@ -1,0 +1,5 @@
+{
+  // Used by `build`: same settings, but test files are not shipped in dist/.
+  "extends": "./tsconfig.json",
+  "exclude": ["src/**/*.test.ts"]
+}
