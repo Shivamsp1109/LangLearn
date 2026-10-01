@@ -1,0 +1,21 @@
+# Dependabot opens PRs when dependencies have updates or security fixes.
+version: 2
+updates:
+  - package-ecosystem: npm # also handles pnpm lockfiles
+    directory: /backend
+    schedule:
+      interval: weekly
+    groups:
+      # One PR for all minor/patch updates instead of one PR per package.
+      backend-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+
+  - package-ecosystem: docker-compose
+    directory: /infra/docker
+    schedule:
+      interval: monthly

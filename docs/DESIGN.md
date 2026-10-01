@@ -124,7 +124,7 @@ Being able to explain this trade-off in an interview is worth more than having 8
 |---|---|
 | **MySQL 8** | Source of truth for all persistent data |
 | **Redis 7** | Cache, rate limiting, leaderboards (sorted sets), BullMQ queues, Socket.IO adapter (lets several realtime pods share rooms), refresh-token deny list |
-| **Object storage (MinIO, S3-compatible)** | Lesson audio, avatars, model files |
+| **Object storage (S3-compatible, e.g. SeaweedFS or Garage)** | Lesson audio, avatars, model files. Added in Phase 3, when we first need it. (MinIO, the usual choice, stopped publishing community Docker images in late 2025.) |
 
 ---
 
@@ -149,14 +149,14 @@ Being able to explain this trade-off in an interview is worth more than having 8
 ### 4.2 Backend
 | Choice | Why |
 |---|---|
-| **Node 24 LTS + TypeScript (strict)** | LTS = supported in production. Strict TS catches bugs at compile time |
+| **Node 24 LTS + TypeScript 6 (strict)** | LTS = supported in production. Strict TS catches bugs at compile time |
 | **NestJS** | Opinionated structure (modules, DI, guards, interceptors), close to Spring Boot; teaches enterprise patterns better than bare Express |
 | **Prisma ORM** | Type-safe queries, migrations as code. We'll also write **raw SQL** for leaderboard and report queries to learn SQL properly |
 | **Zod** | Runtime validation of request bodies + env config; shares types with TS |
 | **BullMQ** | Reliable Redis-based job queue (retries, delays, cron jobs) |
 | **Socket.IO** + Redis adapter | WebSockets with rooms, reconnection and horizontal scaling |
 | **Pino** | Fast structured JSON logging |
-| **Jest + Supertest + Testcontainers** | Unit tests + integration tests against a real MySQL in Docker |
+| **Vitest + Supertest + Testcontainers** | Unit tests + integration tests against a real MySQL in Docker. Vitest over Jest: native TypeScript and ES-module support with no extra config, and a Jest-compatible API |
 | **pnpm workspaces** | One repo, several backend apps sharing a `shared` package (types, constants) |
 | **OpenAPI (Swagger)** | API contract generated from code, which the Android team (you) consumes |
 
@@ -217,14 +217,14 @@ The app's **Translate** screen shows M1/M2 next to M3 with a quality score. This
 raw data → clean (dedupe, length filter, language-ID filter) → split train/val/test
         → train tokenizer → tokenize → train model (Colab/Kaggle GPU)
         → evaluate (BLEU, chrF on FLORES) → log to MLflow
-        → export (ONNX / GGUF, quantize) → upload to model store (MinIO) with version tag
+        → export (ONNX / GGUF, quantize) → upload to the object store with a version tag
         → ai-service loads model by version from config
 ```
 
 ### 5.4 Serving
 - `ai-service` exposes `/translate`, `/correct`, `/chat` (SSE streaming).
 - core-api is the **only** caller (the Android app never talks to ai-service directly), so auth, rate limits and logging live in one place.
-- **Model registry:** a `model_versions` table plus files in MinIO. Switching models is a config change, not a code change.
+- **Model registry:** a `model_versions` table plus files in the object store. Switching models is a config change, not a code change.
 - **Hardware reality:** training happens on free cloud GPUs. Serving runs on CPU with quantized models (slower, but free). Expect the tutor to reply at a few tokens per second on CPU. That's acceptable, and it's why we stream.
 
 ### 5.5 Safety
@@ -465,7 +465,7 @@ Each phase ends with: **working code → report → your learning list → your 
 
 | Phase | Deliverable | Main things you'll learn |
 |---|---|---|
-| **0. Foundation** | Monorepo, tooling, Docker Compose (MySQL, Redis, MinIO), CI skeleton | Git workflow, Docker, Compose, CI basics |
+| **0. Foundation** | Monorepo, tooling, `@langlearn/shared` package, Docker Compose (MySQL, Redis), CI (backend + infra), Dependabot | Git workflow, Docker, Compose, CI basics |
 | **1. Backend core** | NestJS core-api: config, logging, errors, auth (JWT + rotation), users, roles, languages/courses; Prisma schema + migrations; tests | NestJS, TS, REST, JWT, SQL modelling, testing |
 | **2. Android foundation** | Multi-module app, design system, auth + onboarding screens, networking, token refresh, DataStore | Compose, MVVM, Hilt, Retrofit, modularization |
 | **3. Learning engine** | Lessons, exercises, offline-first sync, XP ledger, streaks, SM-2 review, leaderboards, seed content for all 12 courses | Offline-first, idempotency, Redis, algorithms, transactions |
@@ -484,7 +484,7 @@ Each phase ends with: **working code → report → your learning list → your 
 |---|---|---|
 | Git | ✅ 2.43 | now |
 | Node.js | ⚠️ v23 installed: **not an LTS release and out of support**. Install **Node 24 LTS** | Phase 0 |
-| pnpm | via `corepack enable` | Phase 0 |
+| pnpm | `npm i -g pnpm@12` (your bundled corepack is too old to verify pnpm 12 signatures) | Phase 0 |
 | Docker Desktop (WSL2 backend) | ❌ not found | Phase 0 |
 | Python | ⚠️ 3.13 installed. Use **3.12** via `uv` for the best ML library compatibility | Phase 4 |
 | Android Studio + JDK 21 | ? | Phase 2 |
