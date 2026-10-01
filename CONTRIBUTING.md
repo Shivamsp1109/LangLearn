@@ -36,6 +36,7 @@ docker compose --profile tools up -d   # optional: Adminer DB UI on http://local
 docker compose down         # stop (keeps data)
 docker compose down -v      # stop and DELETE all data
 ```
+**Port already in use?** If another MySQL or Redis is already running on your machine, change `MYSQL_PORT` / `REDIS_PORT` in `.env` (e.g. `MYSQL_PORT=3307`). Only the host side of the mapping changes; inside Docker, MySQL still listens on 3306.
 
 ### Backend
 ```bash
